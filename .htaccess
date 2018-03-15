@@ -1,0 +1,10 @@
+DirectoryIndex index.php
+Options -Indexes
+Options +FollowSymLinks
+RewriteEngine On
+
+#Adding Rewrite Rules
+RewriteRule ^login$ login.php
+RewriteRule ^login/$ login.php
+RewriteRule ^jwtTest$ jwtTest.php
+RewriteRule ^jwtTest/$ jwtTest.php
