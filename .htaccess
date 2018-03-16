@@ -10,3 +10,7 @@ RewriteRule ^checkRooms$ checkRooms.php
 RewriteRule ^checkRooms/$ checkRooms.php
 RewriteRule ^bookRoom bookRoom.php
 RewriteRule ^bookRoom/$ bookRoom.php
+RewriteRule ^bookingInfo bookingInfo.php
+RewriteRule ^bookingInfo/$ bookingInfo.php
+RewriteRule ^roomDetail roomDetail.php
+RewriteRule ^roomDetail/$ roomDetail.php
