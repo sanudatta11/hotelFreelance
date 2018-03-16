@@ -123,13 +123,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             die();
         }
 
-    } else {
-        $data['message'] = "Invalid Token";
-        http_response_code(406);
-        header('Content-Type: application/json');
-        echo json_encode($data);
-        die();
-    }
+        } else {
+            $data['message'] = "Invalid Token";
+            http_response_code(406);
+            header('Content-Type: application/json');
+            echo json_encode($data);
+            die();
+        }
 } else {
     $data['message'] = "Invalid HTTP Method";
     http_response_code(405);

@@ -8,3 +8,5 @@ RewriteRule ^login$ login.php
 RewriteRule ^login/$ login.php
 RewriteRule ^checkRooms$ checkRooms.php
 RewriteRule ^checkRooms/$ checkRooms.php
+RewriteRule ^bookRoom bookRoom.php
+RewriteRule ^bookRoom/$ bookRoom.php
