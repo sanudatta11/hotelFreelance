@@ -24,9 +24,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $decoded = JWT::decode($jwt, $jwtKey, array('HS256'));
             if (isset($_POST['roomId'])) {
                 try {
-                    $sql_query_string = "SELECT * FROM " . $dbname . ".rooms WHERE id = :rid LIMIT 1 ";
+                    $sql_query_string = "SELECT * FROM " . $dbname . ".rooms WHERE id = :rid LIMIT 1";
                     $find_query = $mysql_conn->prepare($sql_query_string);
-                    $find_query->bindParam(':rid', $_POST['roomId']);
+                    $find_query->bindParam(':rid', $_POST['roomId'],PDO::PARAM_INT);
                     $find_query->execute();
 
                     $find_query->setFetchMode(PDO::FETCH_ASSOC);
@@ -35,6 +35,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     {
                         $data['message'] = "Details Populated";
                         $data['data'] = $find_query->fetch();
+                        $sql_query_string = "SELECT * FROM " . $dbname . ".roomsCategories WHERE id = :cid LIMIT 1";
+                        $find_query = $mysql_conn->prepare($sql_query_string);
+                        $find_query->bindParam(':cid', $data['data']['categoryId'],PDO::PARAM_INT);
+                        $find_query->execute();
+                        $data['data']['price'] = $find_query->fetch()['price'];
+                        $find_query->setFetchMode(PDO::FETCH_ASSOC);
                         http_response_code(200);
                         header('Content-Type: application/json');
                         echo json_encode($data);
@@ -46,7 +52,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         echo json_encode($data);
                         die();
                     }
-                } catch (exception $e) {
+                }
+                catch (exception $e) {
                     $data['message'] = "PDO::ERROR";
                     $data['error'] = $e;
                     http_response_code(400);
