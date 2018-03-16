@@ -29,11 +29,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $find_query->setFetchMode(PDO::FETCH_ASSOC);
             while ($row = $find_query->fetch()) {
                 if ($row['password'] == $password) { //Add SHA1 Verification if needed
-//                    $update_query_string = "UPDATE ".$dbname.".login SET sessionkey = :sessvar WHERE id=:bindid";
-//                    $update_query = $mysql_conn->prepare($update_query_string);
-//                    $update_query->bindParam(':bindid', $row['id'], PDO::PARAM_INT);
-//                    $update_query->bindParam(':sessvar', session_id());
-//                    $update_query->execute();
 
                     $token = array(
                         "iat" => 1356999524,
@@ -41,13 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         "userId" => $row['id']
                     );
 
-                    try{
-                        $jwtToken = JWT::encode($token, $jwtKey);
-                        echo $jwtToken;
-                    }catch (exception $e){
-                        echo $e;
-                        die();
-                    }
+                    $jwtToken = JWT::encode($token, $jwtKey);
 
                     $data['message'] = "Login Successfull";
                     $data['token'] = $jwtToken;

@@ -6,5 +6,5 @@ RewriteEngine On
 #Adding Rewrite Rules
 RewriteRule ^login$ login.php
 RewriteRule ^login/$ login.php
-RewriteRule ^jwtTest$ jwtTest.php
-RewriteRule ^jwtTest/$ jwtTest.php
+RewriteRule ^checkRooms$ checkRooms.php
+RewriteRule ^checkRooms/$ checkRooms.php
