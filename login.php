@@ -6,7 +6,6 @@
  * Time: 9:38 PM
  */
 
-session_start();
 require_once $_SERVER['DOCUMENT_ROOT'] . '/confidential/connector.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/confidential/mysql_login.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/confidential/config.php';

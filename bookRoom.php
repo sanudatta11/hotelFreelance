@@ -5,7 +5,7 @@
  * Date: 16/3/18
  * Time: 11:57 AM
  */
-session_start();
+
 require_once $_SERVER['DOCUMENT_ROOT'] . '/confidential/connector.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/confidential/mysql_login.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/confidential/config.php';
@@ -40,12 +40,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         die();
                     } else {
                         //Room is clear
-                        $sql_query_string = "INSERT INTO " . $dbname . ".bookings (roomId,customerName,dateEntry,dateExit) VALUES(:rid,:cName,:bindEntry,:bindExit)";
+                        $sql_query_string = "INSERT INTO " . $dbname . ".bookings (roomId,customerName,dateEntry,dateExit,payment) VALUES(:rid,:cName,:bindEntry,:bindExit,:pay)";
                         $update_query = $mysql_conn->prepare($sql_query_string);
                         $update_query->bindParam(':rid', $_POST['roomId']);
                         $update_query->bindParam(':cName', $_POST['customerName']);
                         $update_query->bindParam(':bindEntry', $_POST['dateEntry']);
                         $update_query->bindParam(':bindExit', $_POST['dateExit']);
+                        $paymentDone = (isset($_POST['payment']) && $_POST['payment'] == 1) ? 1 : 0;
+                        $update_query->bindParam(':pay', $paymentDone);
                         $update_query->execute();
 
                         $sql_query_string = "SELECT * FROM " . $dbname . ".rooms WHERE id = :rid LIMIT 1";
