@@ -6,7 +6,6 @@
  * Time: 9:26 AM
  */
 
-session_start();
 require_once $_SERVER['DOCUMENT_ROOT'] . '/confidential/connector.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/confidential/mysql_login.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/confidential/config.php';
@@ -24,66 +23,63 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $decoded = JWT::decode($jwt, $jwtKey, array('HS256'));
             if (isset($_POST['dateExit']) && isset($_POST['roomId']) && isset($_POST['customerName']) && isset($_POST['bookingId']) && isset($_POST['checkOutDate'])) {
                 try {
-                    $sql_query_string = "SELECT * FROM " . $dbname . ".bookings WHERE id = :bid and roomId = :rid and customerName = :cname";
+                    $sql_query_string = "SELECT * FROM " . $dbname . ".bookings WHERE id = :bid";
                     $find_query = $mysql_conn->prepare($sql_query_string);
                     $find_query->bindParam(':bid', $_POST['bookingId']);
-                    $find_query->bindParam(':rid', $_POST['roomId']);
-                    $find_query->bindParam(':cname', $_POST['customerName']);
                     $find_query->execute();
 
+
                     if ($find_query->rowCount() > 0) {
+                        $find_query->setFetchMode(PDO::FETCH_ASSOC);
+                        $bookingData = $find_query->fetch();
+
                         //Find room cost for this roomId
-                        $sql_query_string = "SELECT * FROM " . $dbname . ".rooms WHERE id = :rid LIMIT 1";
+                        $sql_query_string = "SELECT * FROM " . $dbname . ".rooms A," . $dbname . ".roomsCategories B WHERE A.id = :rid AND A.categoryId = B.id";
                         $find_query = $mysql_conn->prepare($sql_query_string);
                         $find_query->bindParam(':rid', $_POST['roomId'], PDO::PARAM_INT);
                         $find_query->execute();
 
                         $find_query->setFetchMode(PDO::FETCH_ASSOC);
-                        $roomPriceData['base'] = 0;
-                        if ($find_query->rowCount() > 0) {
-                            $roomPriceData = $find_query->fetch();
-                        } else {
+                        if ($find_query->rowCount() <= 0) {
                             $data['message'] = "Room Find Error";
                             http_response_code(404);
                             header('Content-Type: application/json');
                             echo json_encode($data);
                             die();
                         }
+                        $roomPriceData = $find_query->fetch();
                         //Check if the time has elapsed for booking if yes, calculate cost. Or else give the basic cost.
-                        $find_query->setFetchMode(PDO::FETCH_ASSOC);
-                        $bookingData = $find_query->fetch();
 
-                        $data['roomDetail'] = $bookingData;
-                        $dateEntry = date_create($bookingData['dateEntry']);
-                        $dateExit = date_create($bookingData['dateExit']);
+                        $data['bookingDetail'] = $bookingData;
+                        $data['roomData'] = $roomPriceData;
+                        $dateDiff = (int)(strtotime($bookingData['dateExit']) - strtotime($bookingData['dateEntry']));
+                        $data['price']  = (int)($dateDiff / (60 * 60 * 24)) * (int)$roomPriceData['price'];
 
-                        $dateDiff = date_diff($dateEntry,$dateExit);
-                        $data['price']  = $dateDiff * $roomPriceData['price'];
-
-                        if ($bookingData['dateExit'] < $_POST['checkOutDate']) {
+                        if (strtotime($bookingData['dateExit']) < strtotime($_POST['checkOutDate'])) {
                             //Extra days fees must be included with base fees
                             $dateEntry = date_create($bookingData['dateExit']);
                             $dateExit = date_create($_POST['checkOutDate']);
 
-                            $data['extraPrice'] = $roomPriceData['price'] * date_diff($dateEntry,$dateExit);
+                            $dateDiff = (int)(strtotime($_POST['checkOutDate']) - strtotime($bookingData['dateExit']));
+                            $data['extraPrice'] = (int)$roomPriceData['price'] * (int)($dateDiff / (60 * 60 * 24));
                         }
 
                         //Add Details to Past Bookings
-                        $sql_query_string = "INSERT INTO " . $dbname . ".pastBookings (roomId,customerName,dateEntry,dateExit) VALUES(:rid,:cName,:bindEntry,:bindExit)";
+                        $sql_query_string = "INSERT INTO " . $dbname . ".pastBookings (roomId,customerName,dateEntry,dateExit,normalFee,extraFee) VALUES(:rid,:cName,:bindEntry,:bindExit,:nfee,:efee)";
                         $update_query = $mysql_conn->prepare($sql_query_string);
                         $update_query->bindParam(':rid', $_POST['roomId']);
                         $update_query->bindParam(':cName', $_POST['customerName']);
-                        $update_query->bindParam(':bindEntry', $_POST['dateEntry']);
+                        $update_query->bindParam(':bindEntry', $bookingData['dateEntry']);
                         $update_query->bindParam(':bindExit', $_POST['dateExit']);
-                        $update_query->bindParam(':normalFee', $data['price']);
+                        $update_query->bindParam(':nfee', $data['price']);
                         $tempExtra = isset($data['extraPrice'])? $data['extraPrice'] : 0;
-                        $update_query->bindParam(':extraFee', $tempExtra);
+                        $update_query->bindParam(':efee', $tempExtra);
                         $update_query->execute();
 
                         //Remove the details from booking table and adding it to past booking
                         $sql_query_string = "DELETE FROM " . $dbname . ".bookings WHERE id = :bid";
                         $update_query = $mysql_conn->prepare($sql_query_string);
-                        $update_query->bindParam(':rid', $_POST['roomId']);
+                        $update_query->bindParam(':bid', $bookingData['id']);
                         $update_query->execute();
 
                         $data['message'] = "Checkout Complete";
